@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/play" android:title="@string/play" android:icon="@drawable/play_detail"/>
+    <item android:id="@+id/add_favorite" android:title="@string/add_favotite" android:icon="@drawable/favorite_detail"/>
+    <item android:id="@+id/add_to" android:title="@string/add_to" android:icon="@drawable/add_list_detail"/>
+</menu>

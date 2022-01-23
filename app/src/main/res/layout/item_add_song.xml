@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/trackView"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/profile_image"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:src="@color/black"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        app:civ_border_width="0dp"
+        app:civ_border_color="#FF000000"/>
+
+    <TextView
+        android:id="@+id/tvTracks"
+        android:textColor="@color/black"
+        android:text="@string/all_track"
+        android:singleLine="true"
+        android:textSize="14sp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginStart="10dp"
+        app:layout_constraintRight_toLeftOf="@+id/checkbox"
+        app:layout_constraintLeft_toRightOf="@+id/profile_image"
+        app:layout_constraintBottom_toTopOf="@+id/center_view"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"/>
+
+    <View
+        android:id="@+id/center_view"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="1dp"
+        android:layout_height="1dp"/>
+
+    <TextView
+        android:id="@+id/tvArtist"
+        android:text="@string/all_track"
+        android:textSize="14sp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginStart="10dp"
+        app:layout_constraintRight_toLeftOf="@+id/checkbox"
+        app:layout_constraintLeft_toRightOf="@+id/profile_image"
+        app:layout_constraintTop_toBottomOf="@+id/center_view"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"/>
+
+
+    <CheckBox
+        android:id="@+id/checkbox"
+        android:layout_marginEnd="5dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:src="@drawable/icons8_menu_vertical_24"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        app:navigationIcon="@drawable/ic_baseline_arrow_back_24_black"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="?actionBarSize">
+
+        <TextView
+            android:textColor="@color/black"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:text="@string/playlist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </androidx.appcompat.widget.Toolbar>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/create_playlist_view"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <View
+            android:background="@drawable/cornor_style"
+            android:id="@+id/image_create_playlist"
+            android:layout_marginTop="15dp"
+            android:layout_marginStart="10dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_width="76dp"
+            android:layout_height="76dp"/>
+
+        <View
+            android:background="@drawable/ic_baseline_add_circle_outline_24_white"
+            app:layout_constraintRight_toRightOf="@+id/image_create_playlist"
+            app:layout_constraintLeft_toLeftOf="@+id/image_create_playlist"
+            app:layout_constraintBottom_toBottomOf="@+id/image_create_playlist"
+            app:layout_constraintTop_toTopOf="@+id/image_create_playlist"
+            android:layout_width="40dp"
+            android:layout_height="40dp"/>
+
+        <TextView
+            android:text="@string/new_playlist"
+            android:textSize="18sp"
+            android:layout_marginStart="10dp"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintLeft_toRightOf="@+id/image_create_playlist"
+            app:layout_constraintBottom_toBottomOf="@+id/image_create_playlist"
+            app:layout_constraintTop_toTopOf="@+id/image_create_playlist"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/playlistView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="15dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/create_playlist_view"
+        app:layout_constraintVertical_bias="0.0"
+        tools:layout_editor_absoluteX="0dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

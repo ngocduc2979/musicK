@@ -1,0 +1,45 @@
+<resources>
+    <string name="nnd">Nguyễn Ngọc Đức</string>
+    <string name="app_name">MusicK</string>
+    <string name="home">Khám phá</string>
+    <string name="favorite">Yêu thích</string>
+    <string name="search">Tìm kiếm</string>
+    <string name="library">Thư viện</string>
+    <string name="all_track">Trên thiết bị</string>
+    <string name="playlist">Playlist</string>
+    <string name="artist">Ca sĩ</string>
+    <string name="album">Album</string>
+    <string name="save">Lưu</string>
+    <string name="new_playlist">Tạo mới playlist</string>
+    <string name="search_song_artist">Tên bài hát, ca sĩ</string>
+    <string name="create_playlist_hint">Tên playlist</string>
+    <string name="rename">Đổi tên</string>
+    <string name="delete">Xóa playlist</string>
+    <string name="loading">Đang tải…</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="add_favorite_song">Chưa có bài hát yêu thích</string>
+    <string name="add_song_playlist">Chưa có bài hát</string>
+    <string name="delete_out_playlist">Xóa khỏi playlist</string>
+    <string name="delete_from_favorite">Xóa khỏi Yêu thích</string>
+    <string name="tracks">Bài hát</string>
+    <string name="add_song">Thêm vào playlist</string>
+    <string name="done">Xong</string>
+
+    <string name="play">Phát</string>
+    <string name="add_favotite">Thích</string>
+    <string name="add_to">Thêm vào playlist</string>
+
+    <string name="add_to_playlist">Thêm vào playlist</string>
+
+    <string name="sort_by_a_z">Sắp xếp theo tên A-Z</string>
+    <string name="sort_by_z_a">Sắp xếp theo tên Z-A</string>
+
+    <string name="recently_play">Nghe gần đây</string>
+    <string name="springPlaylist">Nhaccuatui</string>
+    <string name="albumSpring">Xuân Đang Đến</string>
+    <string name="charts">Bảng Xếp Hạng</string>
+    <string name="playing_now">Đang phát</string>
+    <string name="pause_now">Dừng</string>
+    <string name="no_result">Không tìm thấy bài hát/ ca sĩ </string>
+
+</resources>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.musick">
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <application
+        android:name="com.example.musick.NotificationChannelClass"
+        android:allowBackup="true"
+        android:icon="@mipmap/purple_icon"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/purple_icon"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Design.Light.NoActionBar"
+        android:requestLegacyExternalStorage="true"
+
+        tools:ignore="AllowBackup">
+        <activity
+            android:name=".activity.SplashActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".activity.PlaylistActivity"/>
+        <activity android:name=".activity.MainActivity"/>
+        <activity android:name=".activity.AllTrackActivity"/>
+        <activity android:name=".activity.PlayerActivity"
+            android:parentActivityName=".activity.MainActivity"/>
+        <activity android:name=".activity.PlaylistSongActivity"/>
+        <activity android:name=".activity.ArtistActivity"/>
+        <activity android:name=".activity.ArtistSongActivity"/>
+        <activity android:name=".activity.AlbumSpringActivity"/>
+        <activity android:name=".activity.AddSongActivity"/>
+        <service android:name=".PlayerService"
+            android:stopWithTask="false"/>
+        <receiver android:name=".MyBroadCastReceiver"/>
+    </application>
+
+</manifest>
