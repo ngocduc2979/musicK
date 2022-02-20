@@ -59,7 +59,6 @@ class BottomDialogAdapter(val listPlaylist: ArrayList<String>, val context: Cont
         }
 
         holder.trackView.setOnClickListener {
-
             listSong.clear()
             val cursor = playlistDatabase.getData("SELECT * FROM '" + listPlaylist[position] + "'")
             while (cursor.moveToNext()) {

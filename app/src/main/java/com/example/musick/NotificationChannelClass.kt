@@ -19,7 +19,7 @@ class NotificationChannelClass: Application() {
 
     private fun createChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationChannel = NotificationChannel(CHANNEL_ID, "channel service",
+            val notificationChannel = NotificationChannel(CHANNEL_ID, "Player Notification",
                 NotificationManager.IMPORTANCE_DEFAULT)
             notificationChannel.setSound(null, null)
             val notificationManager = getSystemService(NotificationManager::class.java)

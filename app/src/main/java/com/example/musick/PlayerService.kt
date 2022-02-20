@@ -1,7 +1,10 @@
 package com.example.musick
 
 import android.annotation.SuppressLint
-import android.app.*
+import android.app.Notification
+import android.app.PendingIntent
+import android.app.Service
+import android.app.TaskStackBuilder
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -14,8 +17,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.support.v4.media.session.MediaSessionCompat
-import android.util.Base64
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.commit451.nativestackblur.NativeStackBlur
 import com.example.musick.NotificationChannelClass.Companion.CHANNEL_ID
@@ -27,11 +28,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import saveData.AppConfig
 import saveData.DataPlayer
 import saveData.DataPlayer.Companion.getInstance
-import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.io.InputStream
-import java.lang.Exception
-import java.net.HttpURLConnection
 import java.net.URL
 import androidx.media.app.NotificationCompat as NotificationCompat1
 
@@ -66,7 +63,6 @@ class PlayerService: Service(), MediaPlayer.OnCompletionListener, MediaPlayer.On
 
     private val updateProgress: Runnable = object : Runnable {
         override fun run() {
-//            Log.wtf("Service", "updateProgress")
             val cur = mediaPlayer!!.currentPosition
             sendBroadcastUpdateProgress(cur, durationCurSong)
             updateProgressHandler.postDelayed(this, 1000L)
@@ -76,6 +72,7 @@ class PlayerService: Service(), MediaPlayer.OnCompletionListener, MediaPlayer.On
 
     override fun onCreate() {
         super.onCreate()
+
         initPlayer()
     }
 
@@ -149,11 +146,14 @@ class PlayerService: Service(), MediaPlayer.OnCompletionListener, MediaPlayer.On
         mediaPlayer!!.start()
         isPlaying = true
         durationCurSong = mp.duration
+
         updateProgressHandler.post(updateProgress)
         sendBroadcastUpdateStatePlay()
     }
 
-    override fun onBufferingUpdate(mp: MediaPlayer?, percent: Int) {}
+    override fun onBufferingUpdate(mp: MediaPlayer?, percent: Int) {
+
+    }
 
     override fun onCompletion(mp: MediaPlayer?) {
         if (AppConfig.getInstance(this).getRepeat().equals("no repeat")) {
@@ -165,7 +165,6 @@ class PlayerService: Service(), MediaPlayer.OnCompletionListener, MediaPlayer.On
         } else if (AppConfig.getInstance(this).getRepeat().equals("repeat one")) {
             repeatOne()
         }
-
         sendNotification()
     }
 
@@ -189,9 +188,12 @@ class PlayerService: Service(), MediaPlayer.OnCompletionListener, MediaPlayer.On
             if (AppConfig.getInstance(this).getPlayList() != null) {
                 val song = AppConfig.getInstance(this).getCurrentSong()
                 isPlaying = false
-                mediaPlayer!!.reset()
-                mediaPlayer!!.setDataSource(this, Uri.parse(song.path))
-//            mediaPlayer!!.prepareAsync()
+
+                if (!mediaPlayer!!.isPlaying) {
+                    mediaPlayer!!.reset()
+                    mediaPlayer!!.setDataSource(this, Uri.parse(song.path))
+                }
+
                 sendNotification()
                 requestUpdateUISongInfo()
                 sendBroadcastUpdateStatePlay()
@@ -209,6 +211,7 @@ class PlayerService: Service(), MediaPlayer.OnCompletionListener, MediaPlayer.On
         AppConfig.getInstance(this).setCurrentSongArtist(curSong)
         AppConfig.getInstance(this).setCurrentSongPath(curSong)
         AppConfig.getInstance(this).setIsPlaying(true)
+
         sendBroadcastNewPlay()
         sendBroadcastUpdateStatePlay()
 
@@ -227,6 +230,7 @@ class PlayerService: Service(), MediaPlayer.OnCompletionListener, MediaPlayer.On
             mediaPlayer!!.reset()
             mediaPlayer!!.setDataSource(this, Uri.parse(song.path))
             mediaPlayer!!.prepareAsync()
+
             requestUpdateUISongInfo()
             sendBroadcastUpdateStatePlay()
             addToHistory(song)
@@ -391,7 +395,7 @@ class PlayerService: Service(), MediaPlayer.OnCompletionListener, MediaPlayer.On
         val mediaSessionCompat = MediaSessionCompat(this, "tag")
         val notification: Notification =
             NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.music_icon)
+                .setSmallIcon(R.drawable.musick_icon)
                 .setContentTitle(song.songName)
                 .setContentText(song.artist)
                 .setLargeIcon(bm)
@@ -403,27 +407,11 @@ class PlayerService: Service(), MediaPlayer.OnCompletionListener, MediaPlayer.On
                 .addAction(R.drawable.ic_baseline_skip_next_24_black, "next",
                     getPendingIntent(this, ACTION_NEXT_SONG))
                 .addAction(R.drawable.ic_baseline_close_24_black, "close",
-                    getPendingIntent(this, ACTION_CLOSE_PLAYER))
-                .setStyle(NotificationCompat1.MediaStyle()
+                    getPendingIntent(this, ACTION_CLOSE_PLAYER)
+                ).setStyle(NotificationCompat1.MediaStyle()
                     .setShowActionsInCompactView(0, 1, 2)
-                    .setMediaSession(if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) mediaSessionCompat.sessionToken else null))
-                .build()
+                ).build()
         startForeground(1, notification)
-    }
-
-
-    fun getBitmapFromURL(src: String?): Bitmap? {
-        return try {
-            val url = URL(src)
-            val connection: HttpURLConnection = url.openConnection() as HttpURLConnection
-            connection.setDoInput(true)
-            connection.connect()
-            val input: InputStream = connection.getInputStream()
-            BitmapFactory.decodeStream(input)
-        } catch (e: IOException) {
-            e.printStackTrace()
-            null
-        }
     }
 
     private fun setClickNotifiMediaStye(): PendingIntent? {
@@ -431,18 +419,26 @@ class PlayerService: Service(), MediaPlayer.OnCompletionListener, MediaPlayer.On
         AppConfig.getInstance(this).setIsNewPlay(false)
         val taskStackBuilder = TaskStackBuilder.create(this)
         taskStackBuilder.addNextIntentWithParentStack(intent)
-        return taskStackBuilder.getPendingIntent(1, PendingIntent.FLAG_UPDATE_CURRENT).also {
-            pendingIntent = it
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return taskStackBuilder.getPendingIntent(1, PendingIntent.FLAG_IMMUTABLE).also {
+                pendingIntent = it
+            }
+        } else {
+            return taskStackBuilder.getPendingIntent(1, PendingIntent.FLAG_UPDATE_CURRENT).also {
+                pendingIntent = it
+            }
         }
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")
     private fun getPendingIntent(context: Context, action: String): PendingIntent {
-        val intent = Intent(this, MyBroadCastReceiver::class.java)
-//        val intent = Intent(action)
+        val intent = Intent(this, PlayerService::class.java)
         intent.action = action
-//        sendBroadcast(intent)
-        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+        } else {
+            return PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        }
     }
 
     fun addToHistory(song: Song) {

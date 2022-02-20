@@ -1,17 +1,19 @@
 package com.example.musick.fragment
 
+import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.example.musick.R
-import android.view.inputmethod.EditorInfo
-
-import android.widget.TextView
-import android.widget.TextView.OnEditorActionListener
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.musick.R
 import com.example.musick.Song
 import com.example.musick.adapter.SearchAdapter
 import kotlinx.android.synthetic.main.fragment_search.*
@@ -45,6 +47,8 @@ class SearchFragment : Fragment() {
             param1 = it.getString(ARG_PARAM1)
             param2 = it.getString(ARG_PARAM2)
         }
+
+
     }
 
     override fun onCreateView(
@@ -60,14 +64,37 @@ class SearchFragment : Fragment() {
 
         getListSong()
 
-        edtSearch.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
+        /*edtSearch.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 var search = edtSearch.text.toString()
                 performSearch(search)
                 return@OnEditorActionListener true
             }
             false
-        })
+        })*/
+
+        edtSearch.requestFocus()
+
+        var lastKeyword = ""
+        edtSearch.addTextChangedListener {
+            val keyword = it.toString()
+
+            if (keyword != lastKeyword) {
+                lastKeyword = keyword
+                performSearch(lastKeyword)
+            }
+        }
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+//        hideSoftKeyboard(edtSearch, requireContext())
+        hidekeyboard()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
     }
 
     private fun performSearch(search: String) {
@@ -98,5 +125,10 @@ class SearchFragment : Fragment() {
         listALlSong.clear()
         listALlSong.addAll(listSongOff)
         listALlSong.addAll(listSongAPI)
+    }
+
+    private fun hidekeyboard() {
+        val imm = requireContext().getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(edtSearch.windowToken, 0)
     }
 }

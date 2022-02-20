@@ -71,9 +71,9 @@ class RecentlyPlayAdapter(val context: Context, val listRecently: ArrayList<Song
     }
 
     override fun getItemCount(): Int {
-        if (listRecently.size <= 5) {
+        if (listRecently.size <= 6) {
             return listRecently.size
-        } else return 5
+        } else return 6
     }
 
     @SuppressLint("ResourceAsColor")
@@ -118,7 +118,18 @@ class RecentlyPlayAdapter(val context: Context, val listRecently: ArrayList<Song
                         true
                     }
                     R.id.add_to -> {
-                        addToPlaylist(song)
+                        val listPlaylist = ArrayList<String>()
+                        listPlaylist.clear()
+                        val cursor = playlistDatabase.getData("SELECT * FROM table_list")
+
+                        while (cursor.moveToNext()) {
+                            listPlaylist.add(cursor.getString(0))
+                        }
+                        if (listPlaylist.size != 0) {
+                            addToPlaylist(song)
+                        } else {
+                            Toast.makeText(context, context.getString(R.string.playlistIsZero), Toast.LENGTH_LONG).show()
+                        }
                         true
                     }
                     else -> false
@@ -128,15 +139,19 @@ class RecentlyPlayAdapter(val context: Context, val listRecently: ArrayList<Song
             }
         })
         optionsMenu.show()
+
+
     }
 
     private fun clickTracksView(position: Int) {
-        AppConfig.getInstance(context).setCurPosition(position)
-        AppConfig.getInstance(context).setPlaylist(listRecently)
+        val curSong = listRecently[position]
+
+        AppConfig.getInstance(context).setCurPosition(0)
+        AppConfig.getInstance(context).setPlaylist(listOf(curSong))
         AppConfig.getInstance(context).setIsNewPlay(true)
 
-        DataPlayer.getInstance()!!.setPlayPosition(position)
-        DataPlayer.getInstance()!!.setPlaylist(listRecently)
+        DataPlayer.getInstance()!!.setPlayPosition(0)
+        DataPlayer.getInstance()!!.setPlaylist(listOf(curSong))
 
         PlayerActivity.launch(context)
     }

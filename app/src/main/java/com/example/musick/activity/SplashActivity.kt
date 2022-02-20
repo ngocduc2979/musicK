@@ -77,15 +77,10 @@ class SplashActivity: AppCompatActivity() {
 
     fun cacheListAlbum() {
 
-        val interceptor = HttpLoggingInterceptor()
-        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
-        val client = OkHttpClient.Builder().addInterceptor(interceptor).build()
-
         val requestAPI: RequestAPI = Retrofit.Builder()
             .baseUrl("https://ngocduc2979.000webhostapp.com")
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .addConverterFactory(GsonConverterFactory.create())
-            .client(client)
             .build()
             .create(RequestAPI::class.java)
 
@@ -154,9 +149,10 @@ class SplashActivity: AppCompatActivity() {
                             val album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID))
                             val duration = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION))
 
-                            if (!path.endsWith(".amr")) {
-                                listAllTracks.add(Song(song, artist, path, album, duration, cacheThumbnailPath(path)))
-                            }
+//                            if (!path.endsWith(".amr")) {
+//                                listAllTracks.add(Song(song, artist, path, album, duration, cacheThumbnailPath(path)))
+//                            }
+                            listAllTracks.add(Song(song, artist, path, album, duration, cacheThumbnailPath(path)))
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }

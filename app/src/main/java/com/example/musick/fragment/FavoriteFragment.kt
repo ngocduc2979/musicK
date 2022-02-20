@@ -47,8 +47,6 @@ class FavoriteFragment : Fragment(), OnClickListerner {
 
             val action = intent.action
 
-            Log.wtf("checkACtiton", action)
-
             if (action.equals(ACTION_CLICK_FAVORITE)){
                 val playlistDatabase = MusicDatabase(requireContext(), "playlist.db", null, 1)
                 listFavorite.clear()
@@ -150,11 +148,6 @@ class FavoriteFragment : Fragment(), OnClickListerner {
 //        playlistDatabase.querryData(delete)
         val playlistDatabase = MusicDatabase(requireContext(), "playlist.db", null, 1)
 
-        val sql = "CREATE TABLE IF NOT EXISTS favorite" +
-                "(songName text PRIMARY KEY, artistName text, path text, album text, duration text, " +
-                "thumbnail text)"
-
-        playlistDatabase.querryData(sql)
         listFavorite.clear()
 
         val cursor = playlistDatabase.getData("SELECT * FROM favorite")
@@ -168,7 +161,7 @@ class FavoriteFragment : Fragment(), OnClickListerner {
             listFavorite.add(Song(name, artist, path, album, duration, thumbnail))
         }
 
-        checkDevice(playlistDatabase)
+//        checkDevice(playlistDatabase)
         sortList()
 
         if (listFavorite.size > 0) {

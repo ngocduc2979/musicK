@@ -1,9 +1,11 @@
 package com.example.musick.adapter
 
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.Context
 import android.util.Log
 import android.view.*
+import android.widget.Button
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.musick.OnClickListerner
@@ -64,7 +66,15 @@ class PlaylistSongAdapter(
         }
 
         holder.tracksView.setOnClickListener {
-            clickTracksView(position)
+            val file = File(listSong[position].path)
+            if (file.exists()) {
+                clickTracksView(position)
+            } else {
+                showDialog()
+                val deleteSong = "DELETE FROM '" + playlistName + "' WHERE path = '" +  listSong[position].path + "'"
+                playlistDatabase.querryData(deleteSong)
+                onClickListerner.setOnclick()
+            }
         }
 
         holder.menu.setOnClickListener {
@@ -143,6 +153,23 @@ class PlaylistSongAdapter(
             }
         })
         optionsMenu.show()
+    }
+
+    private fun showDialog() {
+        val dialog = Dialog(context)
+        dialog.setContentView(R.layout.not_exists_dialog)
+        dialog.setCancelable(true)
+        val window = dialog.window
+        window!!.setLayout(WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT)
+
+        dialog.show()
+
+        val delete = dialog.findViewById<Button>(R.id.tv_delete)
+
+        delete.setOnClickListener {
+            dialog.dismiss()
+        }
     }
 
     fun delete(song: Song) {

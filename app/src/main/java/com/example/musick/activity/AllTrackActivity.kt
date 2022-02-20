@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
@@ -13,32 +14,29 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.menu.MenuBuilder
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
 import com.example.musick.PlayerService
 import com.example.musick.R
 import com.example.musick.Song
 import com.example.musick.adapter.AllTracksAdapter
 import com.example.musick.fragment.FavoriteFragment
 import database.MusicDatabase
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.schedulers.Schedulers
-import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.all_track_activity.*
-import kotlinx.android.synthetic.main.all_track_activity.layout_mini_player
-import kotlinx.android.synthetic.main.all_track_activity.play_mini_player
-import kotlinx.android.synthetic.main.all_track_activity.songName_mini
-import kotlinx.android.synthetic.main.all_track_activity.artist_mini
-import kotlinx.android.synthetic.main.all_track_activity.favorite_mini_player
 import saveData.AppConfig
 import saveData.DataPlayer
+import java.io.File
 import java.util.*
+import kotlin.collections.ArrayList
 
 class AllTrackActivity: AppCompatActivity() {
 
     private var isPlaying = false
-    val playlistDatabase = MusicDatabase(this, "playlist.db", null, 1)
+    private val playlistDatabase = MusicDatabase(this, "playlist.db", null, 1)
+    private lateinit var allTracksAdapter: AllTracksAdapter
+    private var listAllSong = ArrayList<Song>()
 
     private val allTracksActivity: BroadcastReceiver = object : BroadcastReceiver() {
+        @SuppressLint("NotifyDataSetChanged")
         override fun onReceive(context: Context, intent: Intent) {
             val action = intent.action
             if (action == PlayerService.ACTION_NEW_PLAY) {
@@ -51,6 +49,8 @@ class AllTrackActivity: AppCompatActivity() {
                     play_mini_player.setBackgroundResource(R.drawable.ic_baseline_play_arrow_24_white)
                 }
                 AppConfig.getInstance(context).setStatePlay(isPlaying)
+                allTracksAdapter.notifyDataSetChanged()
+
             } else if (action == PlayerService.ACTION_UPDATE_SONG_INFO) {
                 setInfoSong(DataPlayer.getInstance()!!.getCurrentSong())
             } else if (action == PlayerService.ACTION_CLOSE_PLAYER) {
@@ -62,6 +62,11 @@ class AllTrackActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.all_track_activity)
+
+        listAllSong = AppConfig.getInstance(this).getCacheSong() as ArrayList<Song>
+        allTracksAdapter = AllTracksAdapter(listAllSong, this)
+
+        initListWithTracks(listAllSong)
 
         toolbar.setOnClickListener {
             onBackPressed()
@@ -98,12 +103,6 @@ class AllTrackActivity: AppCompatActivity() {
         updateStatePlay()
         upDateCurrentSong()
 
-        if (AppConfig.getInstance(applicationContext).getSongName() == null) {
-            layout_mini_player.visibility = View.GONE
-        } else {
-            layout_mini_player.visibility = View.VISIBLE
-        }
-
         layout_mini_player.setOnClickListener(View.OnClickListener { v ->
             AppConfig.getInstance(v.context).setIsNewPlay(false)
             PlayerActivity.launch(v.context)
@@ -128,6 +127,12 @@ class AllTrackActivity: AppCompatActivity() {
     private fun setInfoSong(song: Song) {
         songName_mini.text = song.songName
         artist_mini.text = song.artist
+
+        Glide.with(this)
+            .load(File(song.thumbnail))
+            .centerCrop()
+            .placeholder(R.drawable.music_default)
+            .into(profile_image_alltracks)
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -193,6 +198,12 @@ class AllTrackActivity: AppCompatActivity() {
             val song = AppConfig.getInstance(this).getCurrentSong()
             songName_mini.text = song.songName
             artist_mini.text = song.artist
+
+            Glide.with(this)
+                .load(song.thumbnail)
+                .centerCrop()
+                .placeholder(R.drawable.music_default)
+                .into(profile_image_alltracks)
         }
     }
 
@@ -226,37 +237,29 @@ class AllTrackActivity: AppCompatActivity() {
         optionsMenu.show()
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private fun initTracks() {
-        Observable.create<List<Song>> {
-            it.onNext(AppConfig.getInstance(this).getCacheSong())
-            it.onComplete()
-        }.subscribeOn(Schedulers.newThread())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
 
-                if (AppConfig.getInstance(this).getSort().equals("a-z")) {
-                    Collections.sort(it, object : Comparator<Song> {
-                        override fun compare(p0: Song, p1: Song): Int {
-                            return p0.songName.compareTo(p1.songName)
-                        }
-                    })
-                } else if (AppConfig.getInstance(this).getSort().equals("z-a")) {
-                    Collections.sort(it, object : Comparator<Song> {
-                        override fun compare(p0: Song, p1: Song): Int {
-                            return p1.songName.compareTo(p0.songName)
-                        }
-                    })
+        if (AppConfig.getInstance(this).getSort().equals("a-z")) {
+            Collections.sort(listAllSong, object : Comparator<Song> {
+                override fun compare(p0: Song, p1: Song): Int {
+                    return p0.songName.compareTo(p1.songName)
                 }
-
-                initListWithTracks(it)
-            }, {
-                it.printStackTrace()
             })
+        } else if (AppConfig.getInstance(this).getSort().equals("z-a")) {
+            Collections.sort(listAllSong, object : Comparator<Song> {
+                override fun compare(p0: Song, p1: Song): Int {
+                    return p1.songName.compareTo(p0.songName)
+                }
+            })
+        }
+
+        allTracksAdapter.notifyDataSetChanged()
     }
 
     private fun initListWithTracks(list: List<Song>) {
         tracksView.layoutManager = LinearLayoutManager(this)
-        tracksView.adapter = AllTracksAdapter(list, this)
+        tracksView.adapter = allTracksAdapter
     }
 
     private fun checkExistInDevice() {
@@ -274,10 +277,15 @@ class AllTrackActivity: AppCompatActivity() {
                     checkExist = true
                 }
             }
-            if (!checkExist) {
+
+            if (AppConfig.getInstance(applicationContext).getSongName() == null) {
                 layout_mini_player.visibility = View.GONE
             } else {
-                layout_mini_player.visibility = View.VISIBLE
+                if (!checkExist) {
+                    layout_mini_player.visibility = View.GONE
+                } else {
+                    layout_mini_player.visibility = View.VISIBLE
+                }
             }
         } else {
             layout_mini_player.visibility = View.GONE

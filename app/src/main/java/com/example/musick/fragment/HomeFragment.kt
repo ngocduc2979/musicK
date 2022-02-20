@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -23,11 +24,17 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import saveData.AppConfig
+import androidx.recyclerview.widget.RecyclerView
+
+
+
 
 class HomeFragment : Fragment() {
 
     var listSong = ArrayList<Song>()
-    var listAlbum = ArrayList<Album>()
+    lateinit var homeAdapter: HomeAdapter
+    var listLoadMore = ArrayList<Song>()
+    var isLoading = false
 
     companion object {
         fun newInstance() =
@@ -42,17 +49,13 @@ class HomeFragment : Fragment() {
         override fun onReceive(p0: Context, intent: Intent) {
             val action = intent.action
             if (action.equals(PlayerService.ACTION_UPDATE_STATE_PLAY)){
-                setAdapter()
+                homeAdapter.notifyDataSetChanged()
             }
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val intent = Intent(requireContext(), PlayerService::class.java)
-        intent.action = PlayerService.ACTION_START_SERVICE
-        activity?.startService(intent)
 
     }
 
@@ -79,14 +82,75 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setAlbumsAdapter()
         setChartsAdapter()
+
+        getListLoadMore()
         setAdapter()
+        initScrollListener()
     }
 
     @SuppressLint("NotifyDataSetChanged")
     override fun onResume() {
         super.onResume()
-        setAdapter()
+        homeAdapter.notifyDataSetChanged()
     }
+
+    private fun getListLoadMore() {
+        listSong = AppConfig.getInstance(requireContext()).getCacheListSongAPI() as ArrayList<Song>
+        if (listSong.size > 10) {
+            for (i in 0 until 9) {
+                listLoadMore.add(listSong[i])
+            }
+        }
+    }
+
+
+    private fun initScrollListener() {
+        playlistView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+            }
+
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                val linearLayoutManager = recyclerView.layoutManager as LinearLayoutManager?
+                if (!isLoading) {
+                    if (linearLayoutManager != null && linearLayoutManager.findLastCompletelyVisibleItemPosition() == listLoadMore.size - 1) {
+                        //bottom of list!
+                        loadMore()
+                        isLoading = true
+                    }
+                }
+            }
+        })
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private fun loadMore() {
+
+        listLoadMore.add(Song("loading", null.toString(), null.toString(), null.toString(), null.toString(), null.toString() ))
+        homeAdapter.notifyItemInserted(listLoadMore.size - 1)
+
+        val handler = Handler()
+        handler.postDelayed(Runnable {
+            listLoadMore.removeAt(listLoadMore.size - 1)
+            val scrollPosition = listLoadMore.size
+            homeAdapter.notifyItemRemoved(scrollPosition)
+            var currentSize = scrollPosition
+            var nextLimit = 1
+            if (listSong.size >= scrollPosition + 10) {
+                nextLimit = currentSize + 10
+            } else {
+                nextLimit = listSong.size - 1
+            }
+            while (currentSize - 1 < nextLimit) {
+                listLoadMore.add(listSong[currentSize])
+                currentSize++
+            }
+            homeAdapter.notifyDataSetChanged()
+            isLoading = false
+        }, 2000)
+    }
+
 
     private fun setChartsAdapter() {
         val listCharts = AppConfig.getInstance(requireContext()).getCacheListCharts() as ArrayList<Album>
@@ -94,15 +158,14 @@ class HomeFragment : Fragment() {
         chartsView.adapter = AlbumHomeAdapter(listCharts, requireContext())
     }
 
-    fun setAlbumsAdapter() {
+    private fun setAlbumsAdapter() {
         val listAlbum = AppConfig.getInstance(requireContext()).getCacheListAlbumSpring() as ArrayList<Album>
         albums.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         albums.adapter = AlbumHomeAdapter(listAlbum, requireContext())
     }
 
-    fun setAdapter() {
-        listSong = AppConfig.getInstance(requireContext()).getCacheListSongAPI() as ArrayList<Song>
-        val homeAdapter = HomeAdapter(listSong, requireContext())
+    private fun setAdapter() {
+        homeAdapter = HomeAdapter(listLoadMore, requireContext())
         playlistView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
         playlistView.adapter = homeAdapter
     }

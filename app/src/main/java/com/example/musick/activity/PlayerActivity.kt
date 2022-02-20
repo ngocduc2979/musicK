@@ -10,6 +10,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import android.widget.SeekBar.OnSeekBarChangeListener
 import androidx.appcompat.app.AppCompatActivity
@@ -20,6 +21,7 @@ import database.MusicDatabase
 import kotlinx.android.synthetic.main.player_activity.*
 import saveData.AppConfig
 import saveData.DataPlayer
+import java.lang.StringBuilder
 
 class PlayerActivity: AppCompatActivity() {
 
@@ -50,6 +52,7 @@ class PlayerActivity: AppCompatActivity() {
                 }
             } else if (action == PlayerService.ACTION_UPDATE_STATE_PLAY) {
                 isPlaying = intent.getBooleanExtra(PlayerService.EXTRA_STATE_PLAY, false)
+
                 if (isPlaying) {
                     play_pause.setBackgroundResource(R.drawable.ic_baseline_pause_circle_filled_24_white)
                 } else {
@@ -60,6 +63,22 @@ class PlayerActivity: AppCompatActivity() {
                 showSongInfo(DataPlayer.getInstance()!!.getCurrentSong())
                 setFavoriteColor()
             }
+
+            /*val characterMapVn = listOf<String>("Đ", "Â", "Ă")
+            val characterMapEn = listOf<String>("D", "A", "A")
+
+            val songName = "DdsjfksjdfkÂ"
+            val stringBuilder = StringBuilder()
+
+            songName.toCharArray().forEach {
+                val indexVn = characterMapVn.indexOf(it.toString())
+
+                if (indexVn >= 0) {
+                    stringBuilder.append(characterMapEn[indexVn])
+                } else {
+                    stringBuilder.append(it.toString())
+                }
+            }*/
         }
     }
 
@@ -87,7 +106,6 @@ class PlayerActivity: AppCompatActivity() {
         setContentView(R.layout.player_activity)
 
 //        isPlaying = intent.getBooleanExtra(PlayerService.EXTRA_STATE_PLAY, false)
-
         setClick()
         setStatePlay()
         play()
@@ -106,6 +124,7 @@ class PlayerActivity: AppCompatActivity() {
         intentFilter.addAction(PlayerService.ACTION_UPDATE_PROGRESS_SONG)
         intentFilter.addAction(PlayerService.ACTION_UPDATE_STATE_PLAY)
         intentFilter.addAction(PlayerService.ACTION_UPDATE_SONG_INFO)
+
         registerReceiver(playerBroadcast, intentFilter)
     }
 
@@ -278,6 +297,7 @@ class PlayerActivity: AppCompatActivity() {
     }
 
     private fun showSongInfo(song: Song) {
+
         tvSongName_player.text = song.songName
         tvArtist_player.text = song.artist
 
@@ -298,7 +318,6 @@ class PlayerActivity: AppCompatActivity() {
 
     private fun play() {
         val checkNewPlay = AppConfig.getInstance(this@PlayerActivity).getIsNewPlay()
-
         if (checkNewPlay) {
             val intent = Intent(this@PlayerActivity, PlayerService::class.java)
             intent.action = PlayerService.ACTION_NEW_PLAY

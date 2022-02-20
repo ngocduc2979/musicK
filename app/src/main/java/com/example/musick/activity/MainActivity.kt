@@ -5,10 +5,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.view.inputmethod.InputMethodManager
+import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager.widget.ViewPager
+import com.bumptech.glide.Glide
 import com.example.musick.PlayerService
 import com.example.musick.R
 import com.example.musick.Song
@@ -24,7 +27,7 @@ import saveData.DataPlayer
 class MainActivity : AppCompatActivity() {
 
     private var isPlaying = false
-    val playlistDatabase = MusicDatabase(this, "playlist.db", null, 1)
+    private val playlistDatabase = MusicDatabase(this, "playlist.db", null, 1)
 
     companion object {
         fun launch(context: Context) {
@@ -35,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     private val maninActivity: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val action = intent.action
+
             if (action == PlayerService.ACTION_NEW_PLAY) {
                 layout_mini_player.visibility = View.VISIBLE
             } else if (action == PlayerService.ACTION_UPDATE_STATE_PLAY) {
@@ -57,28 +61,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-//        AppConfig.getInstance(this).setStatePlay(false)
-
         checkExistInDevice()
-
-//        isPlaying = intent.getBooleanExtra(PlayerService.EXTRA_STATE_PLAY, false)
-//        play_mini_player.setBackgroundResource(R.drawable.ic_baseline_play_arrow_24_white)
-
         setBottomAdapter()
     }
 
     override fun onResume() {
         super.onResume()
 
+        updateStateAndSong()
         setDefaultPlaySong()
         updateStatePlay()
         upDateCurrentSong()
-
-        if (AppConfig.getInstance(applicationContext).getSongName() == null) {
-            layout_mini_player.visibility = View.GONE
-        } else {
-            layout_mini_player.visibility = View.VISIBLE
-        }
 
         layout_mini_player.setOnClickListener(View.OnClickListener { v ->
             AppConfig.getInstance(v.context).setIsNewPlay(false)
@@ -110,6 +103,36 @@ class MainActivity : AppCompatActivity() {
         unregisterReceiver(maninActivity)
     }
 
+    private fun updateStateAndSong() {
+        var checkExist = false
+        val listAllSong = ArrayList<Song>()
+        listAllSong.clear()
+        listAllSong.addAll(AppConfig.getInstance(this).getCacheSong())
+        listAllSong.addAll(AppConfig.getInstance(this).getCacheListSongAPI())
+
+        if (AppConfig.getInstance(this).getPlayList() != null) {
+            val song = AppConfig.getInstance(this).getCurrentSong()
+
+            for (i in listAllSong.indices){
+                if (song.path == listAllSong[i].path) {
+                    checkExist = true
+                }
+            }
+
+            if (AppConfig.getInstance(applicationContext).getSongName() == null) {
+                layout_mini_player.visibility = View.GONE
+            } else {
+                if (!checkExist) {
+                    layout_mini_player.visibility = View.GONE
+                } else {
+                    layout_mini_player.visibility = View.VISIBLE
+                }
+            }
+        } else {
+            layout_mini_player.visibility = View.GONE
+        }
+    }
+
     private fun checkExistInDevice() {
         var checkExist = false
         val listAllSong = ArrayList<Song>()
@@ -125,14 +148,26 @@ class MainActivity : AppCompatActivity() {
                     checkExist = true
                 }
             }
-            if (!checkExist) {
+
+            if (AppConfig.getInstance(applicationContext).getSongName() == null) {
                 layout_mini_player.visibility = View.GONE
             } else {
-                layout_mini_player.visibility = View.VISIBLE
+                if (!checkExist) {
+                    layout_mini_player.visibility = View.GONE
+                } else {
+                    layout_mini_player.visibility = View.VISIBLE
+                    startServiceHere()
+                }
             }
         } else {
             layout_mini_player.visibility = View.GONE
         }
+    }
+
+    private fun startServiceHere() {
+        val intent = Intent(this, PlayerService::class.java)
+        intent.action = PlayerService.ACTION_START_SERVICE
+        startService(intent)
     }
 
     private fun setDefaultPlaySong() {
@@ -145,6 +180,13 @@ class MainActivity : AppCompatActivity() {
     private fun setInfoSong(song: Song) {
         songName_mini.text = song.songName
         artist_mini.text = song.artist
+
+        Glide.with(this)
+            .load(song.thumbnail)
+            .placeholder(R.drawable.music_default)
+            .error("image error")
+            .centerCrop()
+            .into(profile_image_main)
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -156,14 +198,16 @@ class MainActivity : AppCompatActivity() {
             play_mini_player.setBackgroundResource(R.drawable.ic_baseline_play_arrow_24_white)
         }
 
-
         val sql = "CREATE TABLE IF NOT EXISTS favorite" +
-                "(songName text PRIMARY KEY, artistName text, path text, album text, duration text, " +
+                "(songName text, artistName text, path text PRIMARY KEY, album text, duration text, " +
                 "thumbnail text)"
         val history = "CREATE TABLE IF NOT EXISTS history" +
-                "(songName text PRIMARY KEY, artistName text, path text, album text, duration text, " +
+                "(songName text, artistName text, path text PRIMARY KEY, album text, duration text, " +
                 "thumbnail text, plays integer)"
+        val createTablelist = "CREATE TABLE IF NOT EXISTS table_list" +
+                "(name text PRIMARY KEY)"
 
+        playlistDatabase.querryData(createTablelist)
         playlistDatabase.querryData(history)
         playlistDatabase.querryData(sql)
 
@@ -224,10 +268,17 @@ class MainActivity : AppCompatActivity() {
             val song = AppConfig.getInstance(this).getCurrentSong()
             songName_mini.text = song.songName
             artist_mini.text = song.artist
+
+            Glide.with(this)
+                .load(song.thumbnail)
+                .placeholder(R.drawable.music_default)
+                .error("image error")
+                .centerCrop()
+                .into(profile_image_main)
         }
     }
 
-    fun setBottomAdapter() {
+    private fun setBottomAdapter() {
         val viewPagerBottomNavigationAdapter = ViewPagerBottomNavigationAdapter(supportFragmentManager, this)
         view_pager_main.adapter = viewPagerBottomNavigationAdapter
         view_pager_main.offscreenPageLimit = 4
@@ -237,13 +288,19 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPageSelected(position: Int) {
                 if (position == 0) {
-                    bottom_navigation.menu.findItem(R.id.home).setChecked(true)
+                    bottom_navigation.menu.findItem(R.id.home).isChecked = true
                 } else if (position == 1) {
-                    bottom_navigation.menu.findItem(R.id.favorite).setChecked(true)
+                    bottom_navigation.menu.findItem(R.id.favorite).isChecked = true
                 } else if (position == 2) {
-                    bottom_navigation.menu.findItem(R.id.search).setChecked(true)
+                    bottom_navigation.menu.findItem(R.id.search).isChecked = true
                 } else {
-                    bottom_navigation.menu.findItem(R.id.library).setChecked(true)
+                    bottom_navigation.menu.findItem(R.id.library).isChecked = true
+                }
+
+                if (position == 2) {
+                    showKeyboard()
+                } else {
+                    hidekeyboard()
                 }
             }
             override fun onPageScrollStateChanged(state: Int) {
@@ -268,6 +325,18 @@ class MainActivity : AppCompatActivity() {
             }
             return@setOnNavigationItemSelectedListener true
         }
+    }
+
+    private fun showKeyboard() {
+        val imm: InputMethodManager =
+            getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0)
+    }
+
+    private fun hidekeyboard() {
+        val view = this.currentFocus
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(view!!.windowToken, 0)
     }
 
 }

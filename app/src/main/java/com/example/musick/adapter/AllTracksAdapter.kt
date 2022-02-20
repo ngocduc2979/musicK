@@ -50,7 +50,7 @@ class AllTracksAdapter(val listAllTracks: List<Song>, val context: Context):
         holder.tvArtist.text = listAllTracks[position].artist
 
         Glide.with(context)
-            .load(File(listAllTracks[position].thumbnail))
+            .load(listAllTracks[position].thumbnail)
             .placeholder(R.drawable.music_default)
             .error("image error")
             .centerCrop()
@@ -100,6 +100,7 @@ class AllTracksAdapter(val listAllTracks: List<Song>, val context: Context):
     }
 
     private fun clickTracksView(position: Int) {
+
         AppConfig.getInstance(context).setCurPosition(position)
         AppConfig.getInstance(context).setPlaylist(listAllTracks)
         AppConfig.getInstance(context).setIsNewPlay(true)
@@ -131,7 +132,19 @@ class AllTracksAdapter(val listAllTracks: List<Song>, val context: Context):
                         true
                     }
                     R.id.add_to -> {
-                        addToPlaylist(song)
+                        val listPlaylist = ArrayList<String>()
+                        listPlaylist.clear()
+                        val selectTable = "SELECT * FROM table_list"
+
+                        val cursor = playlistDatabase.getData(selectTable)
+                        while (cursor.moveToNext()) {
+                            listPlaylist.add(cursor.getString(0))
+                        }
+                        if (listPlaylist.size != 0) {
+                            addToPlaylist(song)
+                        } else {
+                            Toast.makeText(context, context.getString(R.string.playlistIsZero), Toast.LENGTH_LONG).show()
+                        }
                         true
                     }
                     else -> false

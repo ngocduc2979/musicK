@@ -58,6 +58,8 @@ class PlaylistAdapter(val listPlaylist: ArrayList<String>, val context: Context,
             listSong.add(Song(name, artist, path, album, duration, thumbnail))
         }
 
+//        checkExists(position)
+
         holder.tvPlaylistName.text = listPlaylist[position]
         holder.tvTracks.text = listSong.size.toString() + " Bài hát"
 
@@ -121,6 +123,23 @@ class PlaylistAdapter(val listPlaylist: ArrayList<String>, val context: Context,
         playlistDatabase.querryData(deleteTableList)
         onPlaylistListerner.onPlaylist()
         notifyDataSetChanged()
+    }
+
+    private fun checkExists(pos: Int) {
+        val lisAllTracks = AppConfig.getInstance(context).getCacheSong()
+        listSong.forEach {
+            var checkExist = false
+            for (i in lisAllTracks.indices){
+                if (it.path == lisAllTracks[i].path) {
+                    checkExist = true
+                }
+            }
+            if (!checkExist) {
+                val deleteSong = "DELETE FROM '" + listPlaylist[pos] + "' WHERE path = '" +  it.path + "'"
+                playlistDatabase.querryData(deleteSong)
+                listSong.remove(it)
+            }
+        }
     }
 
     @SuppressLint("NotifyDataSetChanged")

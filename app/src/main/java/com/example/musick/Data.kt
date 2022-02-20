@@ -13,7 +13,8 @@ data class Song(var songName: String,
                 var path: String,
                 var album: String,
                 var duration: String,
-                var thumbnail: String): Serializable, Parcelable
+                var thumbnail: String,
+                var engName: String? = null): Serializable, Parcelable
 
 data class Album(var id: String,
                  var name: String,

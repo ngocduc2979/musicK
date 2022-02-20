@@ -2,9 +2,10 @@ package com.example.musick.adapter
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.view.menu.MenuBuilder
 import androidx.appcompat.view.menu.MenuPopupHelper
@@ -17,21 +18,25 @@ import com.example.musick.Song
 import com.example.musick.activity.PlayerActivity
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import database.MusicDatabase
+import de.hdodenhof.circleimageview.CircleImageView
 import kotlinx.android.synthetic.main.item_all_tracks.view.*
-import kotlinx.android.synthetic.main.item_spring_playlist.view.*
+import kotlinx.android.synthetic.main.item_load_more.view.*
 import saveData.AppConfig
 import saveData.DataPlayer
-import java.io.File
+
 
 class HomeAdapter(val listSong: ArrayList<Song>, val context: Context):
-    RecyclerView.Adapter<HomeAdapter.HomeViewHolder>(), OnClickListerner {
+    RecyclerView.Adapter<RecyclerView.ViewHolder>(), OnClickListerner {
+
+    private val VIEW_TYPE_ITEM = 0
+    private val VIEW_TYPE_LOADING = 1
 
     lateinit var bottomSheetDialog: BottomSheetDialog
     var playlistDatabase = MusicDatabase(context, "playlist.db", null, 1)
 
-    class HomeViewHolder(view: View): RecyclerView.ViewHolder(view) {
-        val imvImageCover   = view.profile_image
-        val tvSongName      = view.tvTracks
+    private class HomeViewHolder(view: View): RecyclerView.ViewHolder(view) {
+        val imvImageCover: CircleImageView = view.profile_image
+        val tvSongName: TextView = view.tvTracks
         val tvArtist        = view.tvArtist
         val tracksView       = view.trackView
         val menu            = view.menu
@@ -39,12 +44,36 @@ class HomeAdapter(val listSong: ArrayList<Song>, val context: Context):
         val pause           = view.pause
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HomeViewHolder {
-        val view = LayoutInflater.from(context).inflate(R.layout.item_all_tracks, parent, false)
-        return HomeViewHolder(view)
+    private class LoadingViewHolder(view: View): RecyclerView.ViewHolder(view) {
+        val loading: ProgressBar = view.progressBar
     }
 
-    override fun onBindViewHolder(holder: HomeViewHolder, position: Int, ) {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+
+        return if (viewType == VIEW_TYPE_ITEM) {
+            val view = LayoutInflater.from(context).inflate(R.layout.item_all_tracks, parent, false)
+            HomeViewHolder(view)
+        } else {
+            val view = LayoutInflater.from(context).inflate(R.layout.item_load_more, parent, false)
+            LoadingViewHolder(view)
+        }
+    }
+
+    override fun onBindViewHolder(viewHolder: RecyclerView.ViewHolder, position: Int) {
+        if (viewHolder is HomeViewHolder) {
+            populateItemRows(viewHolder, position)
+        }
+    }
+
+    override fun getItemCount(): Int {
+        return listSong.size
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return if (listSong[position].songName == "loading") VIEW_TYPE_LOADING else VIEW_TYPE_ITEM
+    }
+
+    private fun populateItemRows(holder: HomeViewHolder, position: Int) {
         holder.tvSongName.text = listSong[position].songName
         holder.tvArtist.text = listSong[position].artist
 
@@ -70,10 +99,6 @@ class HomeAdapter(val listSong: ArrayList<Song>, val context: Context):
         holder.menu.setOnClickListener {
             showPopupMenu(position, it, listSong[position])
         }
-    }
-
-    override fun getItemCount(): Int {
-        return listSong.size
     }
 
     private fun clickTracksView(position: Int) {
@@ -115,7 +140,19 @@ class HomeAdapter(val listSong: ArrayList<Song>, val context: Context):
                         true
                     }
                     R.id.add_to -> {
-                        addToPlaylist(song)
+                        val listPlaylist = ArrayList<String>()
+                        listPlaylist.clear()
+                        val selectTable = "SELECT * FROM table_list"
+
+                        val cursor = playlistDatabase.getData(selectTable)
+                        while (cursor.moveToNext()) {
+                            listPlaylist.add(cursor.getString(0))
+                        }
+                        if (listPlaylist.size != 0) {
+                            addToPlaylist(song)
+                        } else {
+                            Toast.makeText(context, context.getString(R.string.playlistIsZero), Toast.LENGTH_LONG).show()
+                        }
                         true
                     }
                     else -> false
@@ -220,4 +257,6 @@ class HomeAdapter(val listSong: ArrayList<Song>, val context: Context):
     override fun setOnclick() {
         bottomSheetDialog.dismiss()
     }
+
+
 }

@@ -24,10 +24,15 @@ import com.example.musick.adapter.RecentlyPlayAdapter
 import database.MusicDatabase
 import kotlinx.android.synthetic.main.fragment_library.*
 import saveData.AppConfig
+import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
 class LibraryFragment : Fragment() {
+
+    private val listHistory = ArrayList<Song>()
+    private lateinit var recentlyPlayAdapter: RecentlyPlayAdapter
+    private lateinit var playlistDatabase: MusicDatabase
 
     companion object {
         @JvmStatic
@@ -45,8 +50,10 @@ class LibraryFragment : Fragment() {
             val action = intent.action
 
             if (action.equals(PlayerService.ACTION_UPDATE_STATE_PLAY)){
-                Log.wtf("HomeFragment", "ACTION_UPDATE_STATE_PLAY libraryBroadCast")
-                setAdapterRecently()
+
+                getHistory()
+                recentlyPlayAdapter.notifyDataSetChanged()
+//                setAdapterRecently()
             }
         }
     }
@@ -56,6 +63,9 @@ class LibraryFragment : Fragment() {
         arguments?.let {
 
         }
+        playlistDatabase = MusicDatabase(requireContext(), "playlist.db", null, 1)
+        recentlyPlayAdapter = RecentlyPlayAdapter(requireContext(), listHistory)
+
     }
 
     override fun onCreateView(
@@ -67,6 +77,10 @@ class LibraryFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
+        getHistory()
+        setAdapterRecently()
+
         layout_alltrack.setOnClickListener {
            requireContext().startActivity(Intent(requireContext(), AllTrackActivity::class.java))
         }
@@ -80,9 +94,12 @@ class LibraryFragment : Fragment() {
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     override fun onResume() {
         super.onResume()
-        setAdapterRecently()
+        getHistory()
+        recentlyPlayAdapter.notifyDataSetChanged()
+//        setAdapterRecently()
     }
 
     override fun onStart() {
@@ -97,17 +114,30 @@ class LibraryFragment : Fragment() {
         activity?.unregisterReceiver(libraryBroadCast)
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     private fun setAdapterRecently() {
-        val playlistDatabase = MusicDatabase(requireContext(), "playlist.db", null, 1)
-        val cursor = playlistDatabase.getData("SELECT * FROM history")
+        recentlyView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
+        recentlyView.adapter = recentlyPlayAdapter
+    }
 
-        val listHistory = ArrayList<Song>()
+    private fun getHistory() {
+
+        val cursor = playlistDatabase.getData("SELECT * FROM history")
         listHistory.clear()
+
+        val listCacheSong = ArrayList<Song>()
+        listCacheSong.clear()
+        listCacheSong.addAll(AppConfig.getInstance(requireContext()).getCacheSong())
+
+        listCacheSong.forEach {
+            val file = File(it.path)
+            if (!file.exists()) {
+                listCacheSong.remove(it)
+            }
+        }
 
         val listAllSong = ArrayList<Song>()
         listAllSong.clear()
-        listAllSong.addAll(AppConfig.getInstance(requireContext()).getCacheSong())
+        listAllSong.addAll(listCacheSong)
         listAllSong.addAll(AppConfig.getInstance(requireContext()).getCacheListSongAPI())
 
         while (cursor.moveToNext()) {
@@ -136,12 +166,5 @@ class LibraryFragment : Fragment() {
         }
 
         listHistory.reverse()
-
-        recentlyView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
-        val recentlyPlayAdapter = RecentlyPlayAdapter(requireContext(), listHistory)
-        recentlyView.adapter = recentlyPlayAdapter
-        recentlyPlayAdapter.notifyDataSetChanged()
     }
-
-
 }

@@ -1,9 +1,11 @@
 package com.example.musick.adapter
 
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.Context
 import android.util.Log
 import android.view.*
+import android.widget.Button
 import androidx.appcompat.view.menu.MenuBuilder
 import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -16,6 +18,7 @@ import database.MusicDatabase
 import kotlinx.android.synthetic.main.item_all_tracks.view.*
 import saveData.AppConfig
 import saveData.DataPlayer
+import java.io.File
 
 class FavoriteAdapter(var context: Context, var listFavorite: ArrayList<Song>, val onClickListerner: OnClickListerner):
     RecyclerView.Adapter<FavoriteAdapter.FavoriteViewHolder>() {
@@ -48,7 +51,16 @@ class FavoriteAdapter(var context: Context, var listFavorite: ArrayList<Song>, v
             .into(holder.imvThumbnail)
 
         holder.tracksView.setOnClickListener {
-            clickTracksView(position)
+            val file = File(listFavorite[position].path)
+            if (file.exists()) {
+                clickTracksView(position)
+            } else {
+                showDialog()
+                val deleteSong = "DELETE FROM favorite WHERE path = '" +  listFavorite[position].path + "'"
+                playlistDatabase.querryData(deleteSong)
+                onClickListerner.setOnclick()
+            }
+
         }
 
         holder.memu.setOnClickListener {
@@ -134,6 +146,23 @@ class FavoriteAdapter(var context: Context, var listFavorite: ArrayList<Song>, v
             }
         })
         optionsMenu.show()
+    }
+
+    private fun showDialog() {
+        val dialog = Dialog(context)
+        dialog.setContentView(R.layout.not_exists_dialog)
+        dialog.setCancelable(true)
+        val window = dialog.window
+        window!!.setLayout(WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT)
+
+        dialog.show()
+
+        val delete = dialog.findViewById<Button>(R.id.tv_delete)
+
+        delete.setOnClickListener {
+            dialog.dismiss()
+        }
     }
 
     fun delete(song: Song) {
